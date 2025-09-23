@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:responsive_framework/responsive_framework.dart';
+import 'package:flutter_thumbhash/flutter_thumbhash.dart';
 
 import 'package:toonplay/theme/theme.dart';
 import 'package:toonplay/supabase/video_service.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_thumbhash/flutter_thumbhash.dart';
 
 class CategoryCard extends StatefulWidget {
   const CategoryCard({super.key, required this.video});
@@ -19,12 +20,21 @@ class CategoryCard extends StatefulWidget {
 class _CategoryCardState extends State<CategoryCard> {
   @override
   Widget build(BuildContext context) {
-
     final video = widget.video;
-    final videoId  = video.videoId;
+    final videoId = video.videoId;
 
     final imageUrl =
         'https://ai-video-media.codepick.in/thumbnails/$videoId.webp';
+
+    double cardImageHeight = 250;
+
+    if (ResponsiveBreakpoints.of(context).equals('MOBILE_SMALL')) {
+      cardImageHeight = 207;
+    } else if (ResponsiveBreakpoints.of(context).equals('MOBILE')) {
+      cardImageHeight = 250;
+    } else {
+      cardImageHeight = 250;
+    }
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -56,7 +66,7 @@ class _CategoryCardState extends State<CategoryCard> {
                   image: NetworkImage(imageUrl),
                   placeholder: ThumbHash.fromBase64(video.thumbhash).toImage(),
                   width: double.infinity,
-                  height: 250,
+                  height: cardImageHeight,
                   fit: BoxFit.cover,
                 ),
               ),

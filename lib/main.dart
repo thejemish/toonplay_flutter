@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:responsive_framework/responsive_framework.dart';
 import 'package:toonplay/supabase/db_instance.dart';
 
 // Screens
@@ -78,13 +79,12 @@ class _MyAppState extends State<MyApp> {
 
                         return CustomTransitionPage(
                           transitionDuration: Duration(milliseconds: 500),
-                          reverseTransitionDuration: Duration(milliseconds: 300),
+                          reverseTransitionDuration: Duration(
+                            milliseconds: 300,
+                          ),
                           transitionsBuilder:
                               (context, animation, secondaryAnimation, child) {
-                                const begin = Offset(
-                                  0.0,
-                                  1.0,
-                                );
+                                const begin = Offset(0.0, 1.0);
                                 const end =
                                     Offset.zero; // End at the original position
                                 const curve = Curves.ease;
@@ -209,6 +209,16 @@ class _MyAppState extends State<MyApp> {
       title: 'Toonplay',
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
+      builder: (context, child) => ResponsiveBreakpoints.builder(
+        child: child!,
+        breakpoints: [
+          const Breakpoint(start: 0, end: 380, name: 'MOBILE_SMALL'),
+          const Breakpoint(start: 381, end: 450, name: 'MOBILE'),
+          const Breakpoint(start: 451, end: 800, name: TABLET),
+          const Breakpoint(start: 801, end: 1920, name: DESKTOP),
+          const Breakpoint(start: 1921, end: double.infinity, name: '4K'),
+        ],
+      ),
     );
   }
 }
