@@ -7,8 +7,6 @@ import 'package:flutter_thumbhash/flutter_thumbhash.dart';
 import 'package:toonplay/theme/theme.dart';
 import 'package:toonplay/supabase/video_category_service.dart';
 import 'package:toonplay/widgets/category_list.dart';
-import 'package:toonplay/widgets/custom_app_bar.dart';
-import 'package:toonplay/widgets/custom_bottom_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -48,77 +46,73 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     List<int> list = [1, 2, 3, 4, 5];
-    return Scaffold(
-      appBar: CustomAppBar(),
-      bottomNavigationBar: CustomBottomBar(),
-      body: RefreshIndicator(
-        onRefresh: () => Future.sync(() => _pagingController.refresh()),
-        child: PagingListener(
-          controller: _pagingController,
-          builder: (context, state, fetchNextPage) => CustomScrollView(
-            slivers: [
-              // Header section
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: EdgeInsetsDirectional.only(top: 15, bottom: 10),
-                  child: CarouselSlider(
-                    options: CarouselOptions(
-                      enableInfiniteScroll: true,
-                      enlargeCenterPage: true,
-                      enlargeFactor: 0.20,
-                      height: 220,
-                    ),
-                    items: list
-                        .map(
-                          (item) => Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(
-                                AppBorderRadius.md,
-                              ),
-                              color: Colors.red,
+    return RefreshIndicator(
+      onRefresh: () => Future.sync(() => _pagingController.refresh()),
+      child: PagingListener(
+        controller: _pagingController,
+        builder: (context, state, fetchNextPage) => CustomScrollView(
+          slivers: [
+            // Header section
+            SliverToBoxAdapter(
+              child: Container(
+                padding: EdgeInsetsDirectional.only(top: 15, bottom: 10),
+                child: CarouselSlider(
+                  options: CarouselOptions(
+                    enableInfiniteScroll: true,
+                    enlargeCenterPage: true,
+                    enlargeFactor: 0.20,
+                    height: 220,
+                  ),
+                  items: list
+                      .map(
+                        (item) => Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(
+                              AppBorderRadius.md,
                             ),
-                            child: Center(child: Text(item.toString())),
+                            color: Colors.red,
                           ),
-                        )
-                        .toList(),
-                  ),
+                          child: Center(child: Text(item.toString())),
+                        ),
+                      )
+                      .toList(),
                 ),
               ),
-              // Paginated list
-              PagedSliverList<int, VideoCategory>.separated(
-                state: state,
-                fetchNextPage: fetchNextPage,
-                builderDelegate: PagedChildBuilderDelegate<VideoCategory>(
-                  itemBuilder: (context, item, index) => Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 7,
+            ),
+            // Paginated list
+            PagedSliverList<int, VideoCategory>.separated(
+              state: state,
+              fetchNextPage: fetchNextPage,
+              builderDelegate: PagedChildBuilderDelegate<VideoCategory>(
+                itemBuilder: (context, item, index) => Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.sm,
+                  ),
+                  child: CategoryList(category: item, index: index),
+                ),
+                firstPageErrorIndicatorBuilder: (context) =>
+                    FirstPageErrorIndicator(
+                      error: state.error,
+                      onTryAgain: fetchNextPage,
                     ),
-                    child: CategoryList(category: item, index: index),
-                  ),
-                  firstPageErrorIndicatorBuilder: (context) =>
-                      FirstPageErrorIndicator(
-                        error: state.error,
-                        onTryAgain: fetchNextPage,
-                      ),
-                  newPageErrorIndicatorBuilder: (context) =>
-                      NewPageErrorIndicator(
-                        error: state.error,
-                        onTryAgain: fetchNextPage,
-                      ),
-                  firstPageProgressIndicatorBuilder: (context) =>
-                      const FirstPageProgressIndicator(),
-                  newPageProgressIndicatorBuilder: (context) =>
-                      const NewPageProgressIndicator(),
-                  noItemsFoundIndicatorBuilder: (context) =>
-                      const NoItemsFoundIndicator(),
-                  noMoreItemsIndicatorBuilder: (context) =>
-                      const NoMoreItemsIndicator(),
-                ),
-                separatorBuilder: (context, index) => const SizedBox(height: 0),
+                newPageErrorIndicatorBuilder: (context) =>
+                    NewPageErrorIndicator(
+                      error: state.error,
+                      onTryAgain: fetchNextPage,
+                    ),
+                firstPageProgressIndicatorBuilder: (context) =>
+                    const FirstPageProgressIndicator(),
+                newPageProgressIndicatorBuilder: (context) =>
+                    const NewPageProgressIndicator(),
+                noItemsFoundIndicatorBuilder: (context) =>
+                    const NoItemsFoundIndicator(),
+                noMoreItemsIndicatorBuilder: (context) =>
+                    const NoMoreItemsIndicator(),
               ),
-            ],
-          ),
+              separatorBuilder: (context, index) => const SizedBox(height: 0),
+            ),
+          ],
         ),
       ),
     );

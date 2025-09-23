@@ -2,17 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:toonplay/theme/theme.dart';
 
-class CustomBottomBar extends StatefulWidget {
-  const CustomBottomBar({super.key});
+class CustomBottomBar extends StatelessWidget {
+  final int currentIndex;
+  final Function(int) onTap;
 
-  @override
-  State<CustomBottomBar> createState() {
-    return _CustomBottomBarState();
-  }
-}
-
-class _CustomBottomBarState extends State<CustomBottomBar> {
-  int currentPageIndex = 0;
+  const CustomBottomBar({
+    super.key,
+    required this.currentIndex,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,18 +28,14 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
           topRight: Radius.circular(AppBorderRadius.lg),
         ),
         child: NavigationBar(
-          onDestinationSelected: (int index) {
-            setState(() {
-              currentPageIndex = index;
-            });
-          },
+          onDestinationSelected: onTap,
           indicatorColor: Colors.transparent,
           overlayColor: WidgetStateColor.fromMap({
             WidgetState.pressed: Colors.transparent,
           }),
           indicatorShape: const CircleBorder(),
           height: 70,
-          selectedIndex: currentPageIndex,
+          selectedIndex: currentIndex,
           backgroundColor: AppColors.card,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysHide,
           destinations: <Widget>[
@@ -69,7 +63,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                 size: 48,
                 color: AppColors.textSecondary,
               ),
-              label: 'Notifications',
+              label: 'Videos',
             ),
             NavigationDestination(
               selectedIcon: Icon(
@@ -82,7 +76,7 @@ class _CustomBottomBarState extends State<CustomBottomBar> {
                 size: 44,
                 color: AppColors.textSecondary,
               ),
-              label: 'Messages',
+              label: 'Favorites',
             ),
           ],
         ),

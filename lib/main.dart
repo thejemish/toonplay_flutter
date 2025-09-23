@@ -8,6 +8,9 @@ import 'package:toonplay/supabase/db_instance.dart';
 import 'package:toonplay/screens/intro_screen.dart';
 import 'package:toonplay/screens/home_screen.dart';
 import 'package:toonplay/screens/category_list_screen.dart';
+import 'package:toonplay/theme/theme.dart';
+import 'package:toonplay/widgets/custom_bottom_bar.dart';
+import 'package:toonplay/widgets/custom_app_bar.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,17 +47,137 @@ class _MyAppState extends State<MyApp> {
           name: 'intro',
           builder: (context, state) => IntroScreen(),
         ),
-        GoRoute(
-          path: '/home',
-          name: 'home',
-          builder: (context, state) => HomeScreen(),
-        ),
-        GoRoute(
-          path: '/category/:slug',
-          name: 'category',
-          builder: (context, state) {
-            final slug = state.pathParameters["slug"]!;
-            return CategoryListScreen(slug: slug);
+        StatefulShellRoute.indexedStack(
+          branches: [
+            // Home branch (index 0)
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/home',
+                  name: 'home',
+                  pageBuilder: (context, state) {
+                    return CustomTransitionPage(
+                      child: HomeScreen(),
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: CurveTween(
+                                curve: Curves.easeInOutCirc,
+                              ).animate(animation),
+                              child: child,
+                            );
+                          },
+                    );
+                  },
+                  routes: [
+                    GoRoute(
+                      path: '/category/:slug',
+                      name: 'category',
+                      pageBuilder: (context, state) {
+                        final slug = state.pathParameters["slug"]!;
+
+                        return CustomTransitionPage(
+                          transitionDuration: Duration(milliseconds: 500),
+                          reverseTransitionDuration: Duration(milliseconds: 300),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                const begin = Offset(
+                                  0.0,
+                                  1.0,
+                                );
+                                const end =
+                                    Offset.zero; // End at the original position
+                                const curve = Curves.ease;
+
+                                var tween = Tween(
+                                  begin: begin,
+                                  end: end,
+                                ).chain(CurveTween(curve: curve));
+
+                                return SlideTransition(
+                                  position: animation.drive(tween),
+                                  child: child,
+                                );
+                              },
+                          child: Container(
+                            width: double.infinity,
+                            height: double.infinity,
+                            color: AppColors.background,
+                            child: Center(
+                              child: CategoryListScreen(slug: slug),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                // Category detail page as child of home
+              ],
+            ),
+            // Reels branch (index 1)
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/reels',
+                  name: 'reels',
+                  pageBuilder: (context, state) {
+                    return CustomTransitionPage(
+                      child:
+                          HomeScreen(), // Replace with your ReelsScreen when ready
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: CurveTween(
+                                curve: Curves.easeInOutCirc,
+                              ).animate(animation),
+                              child: child,
+                            );
+                          },
+                    );
+                  },
+                ),
+              ],
+            ),
+            // Favorites branch (index 2)
+            StatefulShellBranch(
+              routes: [
+                GoRoute(
+                  path: '/favorites',
+                  name: 'favorites',
+                  pageBuilder: (context, state) {
+                    return CustomTransitionPage(
+                      child:
+                          HomeScreen(), // Replace with your FavoritesScreen when ready
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                            return FadeTransition(
+                              opacity: CurveTween(
+                                curve: Curves.easeInOutCirc,
+                              ).animate(animation),
+                              child: child,
+                            );
+                          },
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+          builder: (context, state, navigationShell) {
+            final extraData = state.path;
+            print('===== extraData ===== $extraData');
+            return Scaffold(
+              body: navigationShell,
+              appBar: CustomAppBar(),
+              bottomNavigationBar: CustomBottomBar(
+                currentIndex: navigationShell.currentIndex,
+                onTap: (index) {
+                  // Fixed: Pass the tapped index instead of current index
+                  navigationShell.goBranch(index);
+                },
+              ),
+            );
           },
         ),
       ],
