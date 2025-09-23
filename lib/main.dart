@@ -9,6 +9,7 @@ import 'package:toonplay/supabase/db_instance.dart';
 import 'package:toonplay/screens/intro_screen.dart';
 import 'package:toonplay/screens/home_screen.dart';
 import 'package:toonplay/screens/category_list_screen.dart';
+import 'package:toonplay/screens/reels_screen.dart';
 import 'package:toonplay/theme/theme.dart';
 import 'package:toonplay/widgets/custom_bottom_bar.dart';
 import 'package:toonplay/widgets/custom_app_bar.dart';
@@ -76,6 +77,8 @@ class _MyAppState extends State<MyApp> {
                       name: 'category',
                       pageBuilder: (context, state) {
                         final slug = state.pathParameters["slug"]!;
+                        final Map<String, dynamic> extraData = state.extra as Map<String, dynamic>;
+                        final String categoryName = extraData['category_name'];
 
                         return CustomTransitionPage(
                           transitionDuration: Duration(milliseconds: 500),
@@ -104,7 +107,7 @@ class _MyAppState extends State<MyApp> {
                             height: double.infinity,
                             color: AppColors.background,
                             child: Center(
-                              child: CategoryListScreen(slug: slug),
+                              child: CategoryListScreen(slug: slug, categoryName: categoryName,),
                             ),
                           ),
                         );
@@ -124,7 +127,7 @@ class _MyAppState extends State<MyApp> {
                   pageBuilder: (context, state) {
                     return CustomTransitionPage(
                       child:
-                          HomeScreen(), // Replace with your ReelsScreen when ready
+                          ReelsScreen(), // Replace with your ReelsScreen when ready
                       transitionsBuilder:
                           (context, animation, secondaryAnimation, child) {
                             return FadeTransition(
@@ -165,8 +168,6 @@ class _MyAppState extends State<MyApp> {
             ),
           ],
           builder: (context, state, navigationShell) {
-            final extraData = state.path;
-            print('===== extraData ===== $extraData');
             return Scaffold(
               body: navigationShell,
               appBar: CustomAppBar(),

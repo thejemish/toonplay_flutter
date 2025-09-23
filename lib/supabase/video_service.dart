@@ -42,9 +42,7 @@ class Video {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Video &&
-          runtimeType == other.runtimeType &&
-          id == other.id;
+      other is Video && runtimeType == other.runtimeType && id == other.id;
 
   @override
   int get hashCode => id.hashCode;
@@ -96,35 +94,26 @@ class VideoService {
     int page = 0,
     int limit = 10,
   }) async {
-    final from = page * limit;
-    final to = from + limit - 1;
-
     print('Getting random videos - limit: $limit, page: $page');
 
     try {
       // Get total count of videos
-      final countResponse = await _supabase
-          .from('videos')
-          .select('id')
-          .count();
+      final countResponse = await _supabase.from('videos').select('id').count();
 
       final int totalVideos = countResponse.count;
 
-      // Get random videos using ORDER BY RANDOM()
-      final dataResponse = await _supabase
-          .from('videos')
-          .select('id, video_id, thumbhash, title, category, category_slug')
-          .order('random()', ascending: true) // PostgreSQL random function
-          .range(from, to);
+      // Use RPC function to get random videos
+      final dataResponse = await _supabase.rpc(
+        'get_random_videos',
+        params: {'limit_count': limit, 'offset_count': page * limit},
+      );
 
       final List<dynamic> data = dataResponse as List<dynamic>;
-      final hasMore = from + data.length < totalVideos;
+      final hasMore = (page * limit) + data.length < totalVideos;
 
       print('Random videos - hasMore: $hasMore');
 
-      final videos = data
-          .map((json) => Video.fromJson(json))
-          .toList();
+      final videos = data.map((json) => Video.fromJson(json)).toList();
 
       return PaginatedVideoResult(
         data: videos,
@@ -147,7 +136,9 @@ class VideoService {
     final from = page * limit;
     final to = from + limit - 1;
 
-    print('Getting videos by category - categorySlug: $categorySlug, limit: $limit, page: $page');
+    print(
+      'Getting videos by category - categorySlug: $categorySlug, limit: $limit, page: $page',
+    );
 
     try {
       // Get total count of videos in this category
@@ -172,9 +163,7 @@ class VideoService {
 
       print('Videos by category - hasMore: $hasMore');
 
-      final videos = data
-          .map((json) => Video.fromJson(json))
-          .toList();
+      final videos = data.map((json) => Video.fromJson(json)).toList();
 
       return PaginatedVideoResult(
         data: videos,

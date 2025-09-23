@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:flutter_thumbhash/flutter_thumbhash.dart';
 
 import 'package:toonplay/theme/theme.dart';
 import 'package:toonplay/supabase/video_category_service.dart';

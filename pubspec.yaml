@@ -44,6 +44,7 @@ dependencies:
   infinite_scroll_pagination: ^5.1.1
   flutter_thumbhash: ^0.1.0+1
   responsive_framework: ^1.5.1
+  video_player: ^2.10.0
 
 dev_dependencies:
   flutter_test:

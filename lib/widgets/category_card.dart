@@ -29,7 +29,7 @@ class _CategoryCardState extends State<CategoryCard> {
     double cardImageHeight = 250;
 
     if (ResponsiveBreakpoints.of(context).equals('MOBILE_SMALL')) {
-      cardImageHeight = 207;
+      cardImageHeight = 200;
     } else if (ResponsiveBreakpoints.of(context).equals('MOBILE')) {
       cardImageHeight = 250;
     } else {
