@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:toonplay/theme/theme.dart';
 import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 import 'package:toonplay/supabase/video_service.dart';
+import 'package:toonplay/supabase/favorites_service.dart';
 
 // Individual short container widget with external video controller
-class ShortContainer extends StatefulWidget {
+class ShortVideoPlayer extends StatefulWidget {
   final Video video;
   final int index;
   final int totalVideos;
@@ -16,7 +20,7 @@ class ShortContainer extends StatefulWidget {
   final bool hasError;
   final VoidCallback onRetryVideo;
 
-  const ShortContainer({
+  const ShortVideoPlayer({
     super.key,
     required this.video,
     required this.index,
@@ -30,14 +34,22 @@ class ShortContainer extends StatefulWidget {
   });
 
   @override
-  State<ShortContainer> createState() => _ShortContainerState();
+  State<ShortVideoPlayer> createState() => _ShortVideoPlayerState();
 }
 
-class _ShortContainerState extends State<ShortContainer>
+class _ShortVideoPlayerState extends State<ShortVideoPlayer>
     with AutomaticKeepAliveClientMixin, TickerProviderStateMixin {
   bool _showPlayPauseButton = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late AnimationController _likeAnimationController;
+  late Animation<double> _likeScaleAnimation;
+
+  final FavoritesService _favoritesService = FavoritesService();
+  bool _isLiked = false;
+  int _likeCount = 0;
+  bool _isLoadingLike = true;
+  bool _isTogglingLike = false;
 
   @override
   bool get wantKeepAlive => true;
@@ -48,6 +60,7 @@ class _ShortContainerState extends State<ShortContainer>
     super.initState();
 
     _isDisposed = false;
+
     // Initialize animation controller for fade effect
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -57,13 +70,145 @@ class _ShortContainerState extends State<ShortContainer>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+
+    // Initialize like button animation
+    _likeAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _likeScaleAnimation = Tween<double>(begin: 1.0, end: 1.3).animate(
+      CurvedAnimation(
+        parent: _likeAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Load like status and count
+    _loadLikeData();
   }
 
   @override
   void dispose() {
     _isDisposed = true;
     _animationController.dispose();
+    _likeAnimationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadLikeData() async {
+    if (_isDisposed) return;
+
+    try {
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      if (userId == null) {
+        setState(() {
+          _isLoadingLike = false;
+        });
+        return;
+      }
+
+      // Load both like status and count in parallel
+      final results = await Future.wait([
+        _favoritesService.isVideoFavorited(
+          userId: userId,
+          videoId: widget.video.id,
+        ),
+        _favoritesService.getTotalLikedVideosByAllUsers(widget.video.id),
+      ]);
+
+      if (!_isDisposed && mounted) {
+        setState(() {
+          _isLiked = results[0] as bool;
+          _likeCount = results[1] as int;
+          _isLoadingLike = false;
+        });
+      }
+    } catch (e) {
+      print('Error loading like data: $e');
+      if (!_isDisposed && mounted) {
+        setState(() {
+          _isLoadingLike = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _toggleLike() async {
+    if (_isTogglingLike) return;
+
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      // Show snackbar if user is not logged in
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please sign in to like videos'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isTogglingLike = true;
+    });
+
+    try {
+      // Optimistically update UI
+      final wasLiked = _isLiked;
+      setState(() {
+        _isLiked = !_isLiked;
+        _likeCount = _isLiked ? _likeCount + 1 : _likeCount - 1;
+      });
+
+      // Play animation
+      _likeAnimationController.forward().then((_) {
+        if (mounted) {
+          _likeAnimationController.reverse();
+        }
+      });
+
+      // Toggle in database
+      final newLikedStatus = await _favoritesService.toggleUserFavorite(
+        userId: userId,
+        videoId: widget.video.id,
+      );
+
+      // Verify the toggle worked correctly
+      if (newLikedStatus != _isLiked) {
+        // Something went wrong, revert
+        if (mounted) {
+          setState(() {
+            _isLiked = wasLiked;
+            _likeCount = wasLiked ? _likeCount + 1 : _likeCount - 1;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error toggling like: $e');
+      // Revert optimistic update on error
+      if (mounted) {
+        setState(() {
+          _isLiked = !_isLiked;
+          _likeCount = _isLiked ? _likeCount + 1 : _likeCount - 1;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to update like. Please try again.'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isTogglingLike = false;
+        });
+      }
+    }
   }
 
   void _togglePlayPause() {
@@ -95,6 +240,15 @@ class _ShortContainerState extends State<ShortContainer>
         });
       }
     });
+  }
+
+  String _formatLikeCount(int count) {
+    if (count >= 1000000) {
+      return '${(count / 1000000).toStringAsFixed(1)}M';
+    } else if (count >= 1000) {
+      return '${(count / 1000).toStringAsFixed(1)}K';
+    }
+    return count.toString();
   }
 
   @override
@@ -209,55 +363,6 @@ class _ShortContainerState extends State<ShortContainer>
                   ),
                 ),
 
-              // Video info overlay
-              if (widget.isInitialized && !widget.hasError)
-                Positioned(
-                  bottom: 100,
-                  left: 16,
-                  right: 80,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          widget.video.category,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          widget.video.title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
               // Video progress indicator
               if (widget.isInitialized &&
                   !widget.hasError &&
@@ -282,6 +387,67 @@ class _ShortContainerState extends State<ShortContainer>
                   ),
                 ),
 
+              // Like button with count (bottom right)
+              Positioned(
+                bottom: 40,
+                right: 20,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ScaleTransition(
+                      scale: _likeScaleAnimation,
+                      child: Container(
+                        padding: EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.textPrimary.withAlpha(120),
+                        ),
+                        child: IconButton(
+                          onPressed: _isLoadingLike ? null : _toggleLike,
+                          icon: _isLoadingLike
+                              ? const SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Icon(
+                                  _isLiked
+                                      ? PhosphorIcons.heart(PhosphorIconsStyle.fill)
+                                      : PhosphorIcons.heart(PhosphorIconsStyle.regular),
+                                  color: _isLiked ? Colors.red : Colors.white,
+                                  size: 28,
+                                ),
+                          padding: const EdgeInsets.all(8),
+                          constraints: const BoxConstraints(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.textPrimary.withAlpha(120),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _isLoadingLike ? '...' : _formatLikeCount(_likeCount),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               // YouTube-style play/pause button overlay
               if (_showPlayPauseButton &&
                   widget.isInitialized &&
@@ -293,7 +459,7 @@ class _ShortContainerState extends State<ShortContainer>
                     child: Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: AppColors.textPrimary.withAlpha(120),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(

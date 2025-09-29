@@ -73,6 +73,8 @@ class VideoCategoryService {
           .eq('is_active', true)
           .count();
 
+      print('countResponse countResponse ${countResponse.count}');
+
       final int totalCategories = countResponse.count;
 
       final dataResponse = await _supabase

@@ -11,6 +11,7 @@ import 'package:toonplay/screens/home_screen.dart';
 import 'package:toonplay/screens/category_list_screen.dart';
 import 'package:toonplay/screens/reels_screen.dart';
 import 'package:toonplay/screens/short_screen.dart';
+import 'package:toonplay/screens/favorites_screen.dart';
 
 import 'package:toonplay/theme/theme.dart';
 import 'package:toonplay/widgets/custom_bottom_bar.dart';
@@ -196,7 +197,7 @@ class _MyAppState extends State<MyApp> {
                   pageBuilder: (context, state) {
                     return CustomTransitionPage(
                       child:
-                          HomeScreen(), // Replace with your FavoritesScreen when ready
+                          FavoritesScreen(), // Replace with your FavoritesScreen when ready
                       transitionsBuilder:
                           (context, animation, secondaryAnimation, child) {
                             return FadeTransition(
