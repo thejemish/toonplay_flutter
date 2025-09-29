@@ -7,9 +7,10 @@ import 'package:toonplay/supabase/video_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class CategoryCard extends StatefulWidget {
-  const CategoryCard({super.key, required this.video});
+  const CategoryCard({super.key, required this.video, required this.onTap});
 
   final Video video;
+  final Function onTap;
 
   @override
   State<CategoryCard> createState() {
@@ -47,7 +48,7 @@ class _CategoryCardState extends State<CategoryCard> {
       child: InkWell(
         splashColor: const Color.fromRGBO(255, 210, 105, 0.5),
         onTap: () {
-          print("Card cliked");
+          widget.onTap();
         },
         child: Container(
           width: double.infinity,

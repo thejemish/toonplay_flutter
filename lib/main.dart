@@ -10,6 +10,8 @@ import 'package:toonplay/screens/intro_screen.dart';
 import 'package:toonplay/screens/home_screen.dart';
 import 'package:toonplay/screens/category_list_screen.dart';
 import 'package:toonplay/screens/reels_screen.dart';
+import 'package:toonplay/screens/short_screen.dart';
+
 import 'package:toonplay/theme/theme.dart';
 import 'package:toonplay/widgets/custom_bottom_bar.dart';
 import 'package:toonplay/widgets/custom_app_bar.dart';
@@ -108,6 +110,49 @@ class _MyAppState extends State<MyApp> {
                             color: AppColors.background,
                             child: Center(
                               child: CategoryListScreen(slug: slug, categoryName: categoryName,),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    GoRoute(
+                      path: '/short/:slug',
+                      name: 'short',
+                      pageBuilder: (context, state) {
+                        final slug = state.pathParameters["slug"]!;
+                        final Map<String, dynamic> extraData = state.extra as Map<String, dynamic>;
+                        final Map<String, dynamic> data = extraData['data'];
+                        final String categoryName = data['category_name'];
+                        final String videoId = data['video_id'];
+
+                        return CustomTransitionPage(
+                          transitionDuration: Duration(milliseconds: 500),
+                          reverseTransitionDuration: Duration(
+                            milliseconds: 300,
+                          ),
+                          transitionsBuilder:
+                              (context, animation, secondaryAnimation, child) {
+                                const begin = Offset(0.0, 1.0);
+                                const end =
+                                    Offset.zero; // End at the original position
+                                const curve = Curves.ease;
+
+                                var tween = Tween(
+                                  begin: begin,
+                                  end: end,
+                                ).chain(CurveTween(curve: curve));
+
+                                return SlideTransition(
+                                  position: animation.drive(tween),
+                                  child: child,
+                                );
+                              },
+                          child: Container(
+                            width: double.infinity,
+                            height: double.infinity,
+                            color: AppColors.background,
+                            child: Center(
+                              child: ShortsScreen(categorySlug: slug, categoryName: categoryName, initialVideoId: videoId,),
                             ),
                           ),
                         );

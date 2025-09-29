@@ -6,9 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_thumbhash/flutter_thumbhash.dart';
 
 class HomeCard extends StatefulWidget {
-  const HomeCard({super.key, required this.video});
+  const HomeCard({super.key, required this.video, required this.onTap});
 
   final Video video;
+  final Function onTap;
 
   @override
   State<HomeCard> createState() {
@@ -37,7 +38,7 @@ class _HomeCardState extends State<HomeCard> {
       child: InkWell(
         splashColor: const Color.fromRGBO(255, 210, 105, 0.5),
         onTap: () {
-          print("Card cliked");
+          widget.onTap();
         },
         child: Container(
           width: 150,

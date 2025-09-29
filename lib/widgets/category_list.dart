@@ -149,7 +149,20 @@ class _CategoryListState extends State<CategoryList> {
                     itemBuilder: (BuildContext context, int index) {
                       final video = videos[index];
 
-                      return HomeCard(video: video);
+                      return HomeCard(
+                        video: video,
+                        onTap: () {
+                          context.go(
+                            '/home/short/$categorySlug',
+                            extra: {
+                              "data": {
+                                "category_name": category.name,
+                                "video_id": video.videoId,
+                              },
+                            },
+                          );
+                        },
+                      );
                     },
                   );
                 } else {

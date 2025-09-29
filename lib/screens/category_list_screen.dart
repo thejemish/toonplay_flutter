@@ -126,7 +126,20 @@ class _CategoryListState extends State<CategoryListScreen> {
                         Expanded(
                           child: Padding(
                             padding: EdgeInsets.only(right: AppSpacing.xs),
-                            child: CategoryCard(video: item),
+                            child: CategoryCard(
+                              video: item,
+                              onTap: () {
+                                context.go(
+                                  '/home/short/${widget.slug}',
+                                  extra: {
+                                    "data": {
+                                      "category_name": item.category,
+                                      "video_id": item.videoId,
+                                    },
+                                  },
+                                );
+                              },
+                            ),
                           ),
                         ),
                         // Right card (if exists)
@@ -136,6 +149,17 @@ class _CategoryListState extends State<CategoryListScreen> {
                               padding: EdgeInsets.only(left: AppSpacing.xs),
                               child: CategoryCard(
                                 video: state.items![nextIndex],
+                                onTap: () {
+                                  context.go(
+                                    '/home/short/${widget.slug}',
+                                    extra: {
+                                      "data": {
+                                        "category_name": state.items![nextIndex].category,
+                                        "video_id": state.items![nextIndex].videoId,
+                                      },
+                                    },
+                                  );
+                                },
                               ),
                             ),
                           ),
